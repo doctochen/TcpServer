@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cstring>
 #include <thread>
+#include "XTcp.h"
 
 class TcpThread
 {
@@ -23,26 +24,26 @@ public:
 
 		for (;;)
 		{
-			int recvLen = recv(client, buf, sizeof(buf) - 1, 0);
+			int recvLen = client.Recv(buf, sizeof(buf) - 1);
 			if (recvLen < 0)
 				break;
 			buf[recvLen] = '\0';
 			if (strstr(buf, "quit") != nullptr)
 			{
 				char re[] = "quit success\n";
-				int sentLen = send(client, re, strlen(re), 0);
+				client.Send(re, strlen(re) + 1);
 				break;
 			}
-			int sentLen = send(client, "ok\n", 3, 0);
+			int sentLen = client.Send("ok\n", 4);
 
 			std::cout << buf << std::endl;
 		}
 
-		closesocket(client);
+		client.Close();
 		delete this;
 	}
 
-	int client = 0;
+	XTcp client;
 };
 
 int main(int argc, char* argv[])
@@ -53,17 +54,21 @@ int main(int argc, char* argv[])
 		port = atoi(argv[1]);
 	}
 
+	XTcp server;
+	server.createSocket();
+	server.bind(port);
+
 	for (;;)
 	{
-		
-
+		XTcp client = server.Accept();
 		TcpThread* th = new TcpThread();
 		th->client = client;
 		std::thread sth(&TcpThread::Main, th);	//用th对象的Main方法，作为线程的入口函数
 		sth.detach();	//分离子线程和主线程
 	}
 
-	closesocket(sock);
+	server.Close();
+
 
 	return 0;
 }
