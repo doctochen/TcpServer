@@ -76,6 +76,7 @@ XTcp XTcp::Accept()
 
 	tcp.ip = inet_ntoa(caddr.sin_addr); // ipµÿ÷∑
 	tcp.port = ntohs(caddr.sin_port);
+	tcp.sock = client;
 	std::cout << tcp.ip << ' ' << tcp.port << std::endl;
 
 	return tcp;
@@ -90,10 +91,17 @@ void XTcp::Close()
 
 int XTcp::Recv(char* buf, int bufSize)
 {
-	return 0;
+	return recv(sock, buf, bufSize, 0);
 }
 
 int XTcp::Send(const char* buf, int sendSize)
 {
-	return 0;
+	int sendedSize = 0;
+	while (sendedSize != sendSize)
+	{
+		int len = send(sock, buf + sendSize, sendSize - sendSize, 0);
+		if (len <= 0) break;
+		sendedSize += len;
+	}
+	return sendedSize;
 }
